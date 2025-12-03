@@ -1,14 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * MITM Attack Demonstration Script
- * 
- * This script demonstrates how to perform and detect MITM attacks
- * Run this to see real examples of attack and defense
- * 
- * Usage: node demonstrateMITM.js
- */
-
 const crypto = require('crypto');
 const {
   VulnerableDHMITM,
@@ -16,24 +7,19 @@ const {
   LiveMessageInterception
 } = require('./utils/mitmAttackSimulator');
 
-console.log('╔═══════════════════════════════════════════════════════════════╗');
-console.log('║       MITM Attack Demonstration - Educational Purpose         ║');
-console.log('╚═══════════════════════════════════════════════════════════════╝\n');
+console.log('===========================================================');
+console.log('    MITM Attack Demonstration - Educational Purpose         ');
+console.log('===========================================================\n');
 
-// ============================================================================
-// PART 1: Vulnerable DH without Signatures
-// ============================================================================
-
-console.log('┌─────────────────────────────────────────────────────────────────┐');
-console.log('│ PART 1: VULNERABLE SCENARIO - DH without Digital Signatures    │');
-console.log('└─────────────────────────────────────────────────────────────────┘\n');
+console.log('-----------------------------------------------------------');
+console.log('PART 1: VULNERABLE SCENARIO - DH without Digital Signatures');
+console.log('-----------------------------------------------------------\n');
 
 const vulnerableAttack = new VulnerableDHMITM();
 
 console.log('[SCENARIO] Alice and Bob want to establish encrypted channel');
 console.log('[SCENARIO] Attacker (Eve) is on the network and intercepts traffic\n');
 
-// Generate keys
 const aliceKeys = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
 const bobKeys = crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
 
@@ -65,22 +51,17 @@ summary.attack.forEach((step, i) => {
 
 console.log('\nImpact:');
 Object.entries(summary.impact).forEach(([prop, status]) => {
-  console.log(`  ❌ ${prop}: ${status}`);
+  console.log(`  ${prop}: ${status}`);
 });
 
-console.log('\n⚠️  CONCLUSION: Without signatures, MITM attack is SUCCESSFUL\n');
+console.log('\nCONCLUSION: Without signatures, MITM attack is SUCCESSFUL\n');
 
-// ============================================================================
-// PART 2: Protected with Digital Signatures
-// ============================================================================
-
-console.log('\n┌─────────────────────────────────────────────────────────────────┐');
-console.log('│ PART 2: PROTECTED SCENARIO - With Digital Signatures           │');
-console.log('└─────────────────────────────────────────────────────────────────┘\n');
+console.log('\n-----------------------------------------------------------');
+console.log('PART 2: PROTECTED SCENARIO - With Digital Signatures');
+console.log('-----------------------------------------------------------\n');
 
 const protectedSystem = new ProtectedWithSignatures();
 
-// Generate RSA keys for Alice and Bob
 const aliceRsaKeys = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 const bobRsaKeys = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
 
@@ -90,7 +71,6 @@ console.log('Bob registers: RSA public key stored on server\n');
 
 console.log('STEP 2: Secure Key Exchange with Signatures\n');
 
-// Alice signs her ECDH key with her RSA private key
 const aliceEcdhKeys = crypto.generateKeyPairSync('ec', {
   namedCurve: 'prime256v1'
 });
@@ -105,7 +85,6 @@ const aliceSignature = protectedSystem.signPublicKey(
 console.log('Alice: ECDH public key signed with RSA private key');
 console.log(`Signature: ${aliceSignature.substring(0, 40)}...\n`);
 
-// Server verifies Alice's signature
 const aliceVerified = protectedSystem.verifyAndAcceptKey(
   'Alice',
   alicePublicKeyPem,
@@ -128,7 +107,7 @@ const mitmResult = protectedSystem.attemptMITMWithFakeSignature(
   aliceRsaKeys.publicKey
 );
 
-console.log('\n✅ CONCLUSION: Digital signatures PREVENT MITM attack\n');
+console.log('\nCONCLUSION: Digital signatures PREVENT MITM attack\n');
 
 const protection = protectedSystem.getProtectionSummary();
 console.log('Protection Mechanism:');
@@ -141,13 +120,9 @@ Object.entries(protection.whyItWorks).forEach(([key, value]) => {
   console.log(`  • ${key}: ${value}`);
 });
 
-// ============================================================================
-// PART 3: Message Tampering Detection
-// ============================================================================
-
-console.log('\n┌─────────────────────────────────────────────────────────────────┐');
-console.log('│ PART 3: Message Tampering Detection (GCM Mode)                 │');
-console.log('└─────────────────────────────────────────────────────────────────┘\n');
+console.log('\n-----------------------------------------------------------');
+console.log('PART 3: Message Tampering Detection (GCM Mode)');
+console.log('-----------------------------------------------------------\n');
 
 console.log('STEP 1: Normal Encrypted Message\n');
 const plaintext = 'Transfer $1000 to Bob';
@@ -181,7 +156,7 @@ try {
   decrypted += decipher.final('utf8');
   console.log('Decrypted message:', decrypted);
 } catch (error) {
-  console.log('❌ TAMPERING DETECTED!');
+  console.log('TAMPERING DETECTED!');
   console.log(`Error: ${error.message}`);
   console.log('\nReason: GCM authentication tag validation failed');
   console.log(
@@ -189,25 +164,21 @@ try {
   );
 }
 
-// ============================================================================
-// SUMMARY
-// ============================================================================
-
-console.log('\n╔═══════════════════════════════════════════════════════════════╗');
-console.log('║                        SUMMARY                                ║');
-console.log('╚═══════════════════════════════════════════════════════════════╝\n');
+console.log('\n===========================================================');
+console.log('SUMMARY');
+console.log('===========================================================\n');
 
 console.log('WITHOUT PROTECTION:');
-console.log('  ❌ MITM attack possible');
-console.log('  ❌ Attacker can read messages');
-console.log('  ❌ Attacker can modify messages');
-console.log('  ❌ No authenticity guarantee\n');
+console.log('  MITM attack possible');
+console.log('  Attacker can read messages');
+console.log('  Attacker can modify messages');
+console.log('  No authenticity guarantee\n');
 
 console.log('WITH OUR PROTECTIONS:');
-console.log('  ✅ Digital Signatures verify key authenticity');
-console.log('  ✅ GCM authentication detects tampering');
-console.log('  ✅ Replay attack protection (timestamps + nonces)');
-console.log('  ✅ Complete end-to-end security\n');
+console.log('  Digital Signatures verify key authenticity');
+console.log('  GCM authentication detects tampering');
+console.log('  Replay attack protection (timestamps + nonces)');
+console.log('  Complete end-to-end security\n');
 
 console.log('KEY TAKEAWAY:');
 console.log(

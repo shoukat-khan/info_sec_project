@@ -1,27 +1,4 @@
-/**
- * MITM Attack Simulator
- * Demonstrates Man-in-the-Middle attacks and how digital signatures prevent them
- * 
- * Educational Purpose Only - Shows vulnerability and protection mechanisms
- */
-
 const crypto = require('crypto');
-
-/**
- * SCENARIO 1: Vulnerable DH without Signatures
- * 
- * Flow without signatures:
- * Alice → Server: Public Key (ECDH) - UNVERIFIED
- * Bob → Server: Public Key (ECDH) - UNVERIFIED
- * 
- * MITM Attacker can:
- * 1. Intercept Alice's public key
- * 2. Send attacker's key to Bob instead
- * 3. Establish separate encrypted channels:
- *    - Alice ↔ Attacker (using Alice's key)
- *    - Attacker ↔ Bob (using Bob's key)
- * 4. Read/modify all messages
- */
 
 class VulnerableDHMITM {
   constructor() {
@@ -29,15 +6,10 @@ class VulnerableDHMITM {
     this.attackerKeys = new Map();
   }
 
-  /**
-   * Simulate key interception
-   * Attacker receives public keys during exchange
-   */
   interceptPublicKey(userId, publicKey) {
     console.log(`[ATTACKER] Intercepted public key from ${userId}`);
     this.interceptedKeys.set(userId, publicKey);
     
-    // Attacker generates their own key pair
     const attackerKeyPair = crypto.generateKeyPairSync('ec', {
       namedCurve: 'prime256v1'
     });
@@ -50,9 +22,6 @@ class VulnerableDHMITM {
     return this.attackerKeys.get(userId).publicKey;
   }
 
-  /**
-   * Attacker performs ECDH with victim
-   */
   performECDH(userId, victimPublicKey, attackerPrivateKey) {
     try {
       const sharedSecret = crypto.diffieHellman({
@@ -67,9 +36,6 @@ class VulnerableDHMITM {
     }
   }
 
-  /**
-   * Demonstrate message interception and modification
-   */
   interceptAndModifyMessage(
     originalMessage,
     senderPublicKey,
@@ -77,17 +43,12 @@ class VulnerableDHMITM {
   ) {
     console.log(`[ATTACKER] Intercepted message: "${originalMessage}"`);
     
-    // Attacker can decrypt with their shared secret
-    // Attacker can modify message
     const modifiedMessage = `${originalMessage} [MODIFIED BY ATTACKER]`;
     console.log(`[ATTACKER] Modified message: "${modifiedMessage}"`);
     
     return modifiedMessage;
   }
 
-  /**
-   * Attack Summary
-   */
   getAttackSummary() {
     return {
       type: 'Man-in-the-Middle (MITM)',
@@ -110,24 +71,12 @@ class VulnerableDHMITM {
   }
 }
 
-/**
- * SCENARIO 2: Protected with Digital Signatures
- * 
- * Flow with signatures:
- * Alice → Server: Public Key + RSA-PSS Signature
- * Bob → Server: Public Key + RSA-PSS Signature
- * Server verifies signatures before accepting keys
- */
-
 class ProtectedWithSignatures {
   constructor() {
-    this.trustedKeys = new Map(); // Stores verified RSA public keys
-    this.userKeys = new Map();     // Maps user to their ECDH keys
+    this.trustedKeys = new Map();
+    this.userKeys = new Map();
   }
 
-  /**
-   * User signs their ECDH public key with RSA private key
-   */
   signPublicKey(userId, ecdhPublicKey, rsaPrivateKey) {
     const keyHash = crypto
       .createHash('sha256')
@@ -142,9 +91,6 @@ class ProtectedWithSignatures {
     return signature.toString('hex');
   }
 
-  /**
-   * Server verifies signature before accepting key
-   */
   verifyAndAcceptKey(userId, ecdhPublicKey, signature, rsaPublicKey) {
     try {
       const keyHash = crypto
@@ -180,16 +126,12 @@ class ProtectedWithSignatures {
     }
   }
 
-  /**
-   * Demonstrate why attacker signature fails
-   */
   attemptMITMWithFakeSignature(
     userId,
     fakeEcdhKey,
     attackerRsaPrivateKey,
     legitimateRsaPublicKey
   ) {
-    // Attacker signs with their own RSA key
     const fakeSignature = this.signPublicKey(
       userId,
       fakeEcdhKey,
@@ -200,12 +142,11 @@ class ProtectedWithSignatures {
       `[ATTACKER] Attempting MITM with fake signature (signed with attacker's RSA key)`
     );
 
-    // Server verifies with LEGITIMATE user's RSA public key
     const result = this.verifyAndAcceptKey(
       userId,
       fakeEcdhKey,
       fakeSignature,
-      legitimateRsaPublicKey // Uses legitimate key, not attacker's
+      legitimateRsaPublicKey
     );
 
     if (!result) {
@@ -215,9 +156,6 @@ class ProtectedWithSignatures {
     return result;
   }
 
-  /**
-   * Attack Prevention Summary
-   */
   getProtectionSummary() {
     return {
       protection: 'Digital Signature Verification',
@@ -241,19 +179,11 @@ class ProtectedWithSignatures {
   }
 }
 
-/**
- * SCENARIO 3: Live Interception with Message Modification
- */
-
 class LiveMessageInterception {
-  /**
-   * Demonstrate tampering detection
-   */
   static attemptTampering(encryptedMessage, gcmTag, gcmNonce) {
     console.log('\n[ATTACKER] Intercepted encrypted message');
     console.log(`Original: ${encryptedMessage}`);
 
-    // Attacker modifies ONE character
     const tampered = encryptedMessage.substring(0, 10) + 
                      (parseInt(encryptedMessage[10], 16) + 1).toString(16) +
                      encryptedMessage.substring(11);
@@ -270,9 +200,6 @@ class LiveMessageInterception {
     };
   }
 
-  /**
-   * Show tampering detection
-   */
   static verifyTamperingDetection(originalTag, receivedCiphertext) {
     return {
       status: 'TAMPERING DETECTED',
